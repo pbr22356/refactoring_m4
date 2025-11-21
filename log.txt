@@ -1,3 +1,5 @@
+f1dac1b task 1.2
+cd69cea Task 2.3
 84a1c5a Task 2.2
 37499d0 Task 2.1
 05eee0e Merge remote-tracking branch 'origin/main'
