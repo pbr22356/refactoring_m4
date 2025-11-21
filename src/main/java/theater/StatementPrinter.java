@@ -6,68 +6,86 @@ import java.util.Map;
 
 /**
  * Generates plain-text invoice statements for theater customers.
- * Calculates total amount owed and volume credits based on performances and play types.
  */
 public class StatementPrinter {
 
-    /**
-     * Produces a plain-text statement for the given invoice and play catalog.
-     *
-     * @param invoice the customer's invoice containing performances
-     * @param plays   catalog of all plays with their details
-     * @return formatted plain-text statement
-     * @throws IllegalArgumentException if an unknown play type is encountered
-     */
-    public String statement(Invoice invoice, Map<String, Play> plays) {
-        final var result = new StringBuilder();
-        result.append(String.format("Statement for %s\n", invoice.getCustomer()));
+    private final Invoice invoice;
+    private final Map<String, Play> plays;
 
-        final NumberFormat frmt = NumberFormat.getCurrencyInstance(Locale.US);
+    public StatementPrinter(Invoice invoice, Map<String, Play> plays) {
+        this.invoice = invoice;
+        this.plays = plays;
+    }
 
-        int totalAmount = 0;
-        int volumeCredits = 0;
+    public String statement() {
+        final StringBuilder result = new StringBuilder("Statement for " + invoice.getCustomer() + "\n");
 
-        for (final var perf : invoice.getPerformances()) {
-            final Play play = plays.get(perf.getPlayID());
-            int thisAmount = 0;
-
-            switch (play.getType()) {
-                case "tragedy":
-                    thisAmount = Constants.BASE_TRAGEDY;
-                    if (perf.getAudience() > Constants.AUDIENCE_THRESHOLD) {
-                        thisAmount += Constants.TRAGEDY_EXTRA_PER_PERSON
-                                * (perf.getAudience() - Constants.AUDIENCE_THRESHOLD);
-                    }
-                    break;
-                case "comedy":
-                    thisAmount = Constants.BASE_COMEDY;
-                    if (perf.getAudience() > Constants.AUDIENCE_THRESHOLD) {
-                        thisAmount += Constants.COMEDY_EXTRA_PER_PERSON
-                                * (perf.getAudience() - Constants.AUDIENCE_THRESHOLD);
-                    }
-                    thisAmount += Constants.COMEDY_BASE_EXTRA * perf.getAudience();
-                    break;
-                default:
-                    throw new IllegalArgumentException("unknown type: " + play.getType());
-            }
-
-            // add volume credits
-            volumeCredits += Math.max(perf.getAudience() - Constants.AUDIENCE_THRESHOLD, 0);
-            if ("comedy".equals(play.getType())) {
-                volumeCredits += Math.floor(perf.getAudience() / Constants.COMEDY_CREDITS_DIVISOR);
-            }
-
-            // print line for this order
+        for (Performance perf : invoice.getPerformances()) {
             result.append(String.format("  %s: %s (%d seats)\n",
-                    play.getName(),
-                    frmt.format(thisAmount / Constants.PERCENT_FACTOR),
+                    getPlay(perf).getName(),
+                    usd(getAmount(perf)),
                     perf.getAudience()));
-            totalAmount += thisAmount;
         }
 
-        result.append(String.format("Amount owed is %s\n",
-                frmt.format(totalAmount / Constants.PERCENT_FACTOR)));
-        result.append(String.format("You earned %d credits\n", volumeCredits));
+        result.append("Amount owed is " + usd(getTotalAmount()) + "\n");
+        result.append("You earned " + getTotalVolumeCredits() + " credits\n");
         return result.toString();
+    }
+
+    private int getTotalAmount() {
+        int total = 0;
+        for (Performance perf : invoice.getPerformances()) {
+            total += getAmount(perf);
+        }
+        return total;
+    }
+
+    private int getTotalVolumeCredits() {
+        int total = 0;
+        for (Performance perf : invoice.getPerformances()) {
+            total += getVolumeCredits(perf);
+        }
+        return total;
+    }
+
+    private String usd(int amount) {
+        final NumberFormat frmt = NumberFormat.getCurrencyInstance(Locale.US);
+        return frmt.format(amount / 100.0);
+    }
+
+    private int getVolumeCredits(Performance perf) {
+        int result = Math.max(perf.getAudience() - Constants.AUDIENCE_THRESHOLD, 0);
+        if ("comedy".equals(getPlay(perf).getType())) {
+            result += perf.getAudience() / Constants.COMEDY_CREDITS_DIVISOR;
+        }
+        return result;
+    }
+
+    private Play getPlay(Performance perf) {
+        return plays.get(perf.getPlayID());
+    }
+
+    private int getAmount(Performance perf) {
+        int result = 0;
+        final Play play = getPlay(perf);
+
+        switch (play.getType()) {
+            case "tragedy":
+                result = 40000;
+                if (perf.getAudience() > 30) {
+                    result += 1000 * (perf.getAudience() - 30);
+                }
+                break;
+            case "comedy":
+                result = 30000;
+                if (perf.getAudience() > 20) {
+                    result += 10000 + 500 * (perf.getAudience() - 20);
+                }
+                result += 300 * perf.getAudience();
+                break;
+            default:
+                throw new IllegalArgumentException("unknown type: " + play.getType());
+        }
+        return result;
     }
 }
