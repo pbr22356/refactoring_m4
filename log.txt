@@ -1,3 +1,10 @@
+866764d task 1.2
+9ee633d task 1.1.1
+1fa4238 task 1.1
+e3a9ed9 Task 2.4 log update
+c4c41c2 Task 2: Complete all refactoring steps (2.1-2.4)
+a4df5e9  the task 1 check the sytle
+3aa0e5b Task 1.2: Update log.txt after CheckStyle fixes
 2b4f164 fixed tests for the not-for-credit tasks; parameter ordering and ensuring consistent line endings.
 ff5004e adding shortcut keys for Inline Variable (Re: Piazza question)
 b545fe2 clarifying extracted method names in README.md
