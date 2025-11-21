@@ -17,6 +17,11 @@ public class StatementPrinter {
         this.plays = plays;
     }
 
+    /**
+     * Returns a formatted statement of the invoice associated with this printer.
+     * @return the formatted statement
+     * @throws RuntimeException if one of the play types is not known
+     */
     public String statement() {
         final StringBuilder result = new StringBuilder("Statement for " + invoice.getCustomer() + "\n");
 
@@ -50,13 +55,13 @@ public class StatementPrinter {
 
     private String usd(int amount) {
         final NumberFormat frmt = NumberFormat.getCurrencyInstance(Locale.US);
-        return frmt.format(amount / 100.0);
+        return frmt.format(amount / Constants.PERCENT_FACTOR);
     }
 
     private int getVolumeCredits(Performance perf) {
-        int result = Math.max(perf.getAudience() - Constants.AUDIENCE_THRESHOLD, 0);
+        int result = Math.max(perf.getAudience() - Constants.BASE_VOLUME_CREDIT_THRESHOLD, 0);
         if ("comedy".equals(getPlay(perf).getType())) {
-            result += perf.getAudience() / Constants.COMEDY_CREDITS_DIVISOR;
+            result += perf.getAudience() / Constants.COMEDY_EXTRA_VOLUME_FACTOR;
         }
         return result;
     }
@@ -71,17 +76,20 @@ public class StatementPrinter {
 
         switch (play.getType()) {
             case "tragedy":
-                result = 40000;
-                if (perf.getAudience() > 30) {
-                    result += 1000 * (perf.getAudience() - 30);
+                result = Constants.TRAGEDY_BASE_AMOUNT;
+                if (perf.getAudience() > Constants.BASE_VOLUME_CREDIT_THRESHOLD) {
+                    result += Constants.HISTORY_OVER_BASE_CAPACITY_PER_PERSON * (perf.getAudience()
+                            - Constants.BASE_VOLUME_CREDIT_THRESHOLD);
                 }
                 break;
             case "comedy":
-                result = 30000;
-                if (perf.getAudience() > 20) {
-                    result += 10000 + 500 * (perf.getAudience() - 20);
+                result = Constants.COMEDY_BASE_AMOUNT;
+                if (perf.getAudience() > Constants.COMEDY_AUDIENCE_THRESHOLD) {
+                    result += Constants.COMEDY_OVER_BASE_CAPACITY_AMOUNT + Constants
+                            .COMEDY_OVER_BASE_CAPACITY_PER_PERSON * (perf.getAudience()
+                            - Constants.COMEDY_AUDIENCE_THRESHOLD);
                 }
-                result += 300 * perf.getAudience();
+                result += Constants.COMEDY_AMOUNT_PER_AUDIENCE * perf.getAudience();
                 break;
             default:
                 throw new IllegalArgumentException("unknown type: " + play.getType());
@@ -89,3 +97,4 @@ public class StatementPrinter {
         return result;
     }
 }
+
