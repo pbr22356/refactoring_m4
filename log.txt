@@ -1,4 +1,7 @@
+05eee0e Merge remote-tracking branch 'origin/main'
+590b056 Task 1.1
 866764d task 1.2
+4132b2c task 1.2
 9ee633d task 1.1.1
 1fa4238 task 1.1
 e3a9ed9 Task 2.4 log update
